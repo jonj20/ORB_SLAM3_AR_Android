@@ -259,14 +259,14 @@ Java_com_martin_ads_slamar3_NativeHelper_CVTest(JNIEnv *env, jobject instance, j
 int processImage(cv::Mat &image,cv::Mat &outputImage,int statusBuf[]){
     timeStamp+=1/30.0;
     //Martin:about 140-700ms to finish last part
-    LOGD("Started.");
+    //LOGD("Started.");
     cv::Mat imgSmall;
     cv::resize(image,imgSmall,cv::Size(image.cols/2,image.rows/2));
     Sophus::SE3f Tcw_SE3f = slamSys->TrackMonocular(imgSmall,timeStamp);
     Eigen::Matrix4f Tcw_Matrix = Tcw_SE3f.matrix();
     cv::eigen2cv(Tcw_Matrix, Tcw);
 
-    LOGD("finished. %d %d",imgSmall.rows,imgSmall.cols);
+    //LOGD("finished. %d %d",imgSmall.rows,imgSmall.cols);
     //Martin:about 5ms to finish last part
     //Martin:about 5-10ms to await next image
     int status = slamSys->GetTrackingState();
@@ -276,6 +276,7 @@ int processImage(cv::Mat &image,cv::Mat &outputImage,int statusBuf[]){
         printStatus(status,outputImage);
     drawTrackedPoints(vKeys,vMPs,outputImage);
 
+    LOGD("processImage: status: %d,vp count: %d", status, vMPs.size());
     //cv::imwrite(modelPath+"/lala2.jpg",outputImage);
     if(status==2) {
         if(DRAW_STATUS){
@@ -313,10 +314,10 @@ Java_com_martin_ads_slamar3_NativeHelper_initSLAM(JNIEnv *env, jobject instance,
     settingName=modelPath+settingName;
 
     cv::FileStorage fSettings(settingName, cv::FileStorage::READ);
-    fx = fSettings["Camera.fx"];
-    fy = fSettings["Camera.fy"];
-    cx = fSettings["Camera.cx"];
-    cy = fSettings["Camera.cy"];
+    fx = fSettings["Camera1.fx"];
+    fy = fSettings["Camera1.fy"];
+    cx = fSettings["Camera1.cx"];
+    cy = fSettings["Camera1.cy"];
 
     timeStamp=0;
     LOGD("%s %c %s %c",vocName.c_str(),vocName[vocName.length()-1],settingName.c_str(),settingName[settingName.length()-1]);

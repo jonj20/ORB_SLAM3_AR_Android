@@ -7,6 +7,7 @@
 #include "Matrix.h"
 #include <opencv2/core/eigen.hpp>
 
+#include "Common.h"
 cv::Mat Plane::ExpSO3(const float &x, const float &y, const float &z)
 {
     cv::Mat I = cv::Mat::eye(3,3,CV_32F);
@@ -220,7 +221,8 @@ void Plane::Recompute()
 
     n = (cv::Mat_<float>(3,1)<<nx,ny,nz);
 
-    cv::Mat up = (cv::Mat_<float>(3,1) << 0.0f, 1.0f, 0.0f);
+    //cv::Mat up = (cv::Mat_<float>(3,1) << 0.0f, 1.0f, 0.0f);
+	cv::Mat up = (cv::Mat_<float>(3,1) << 0.0f, 0.0f, -1.0f);
 
     cv::Mat v = up.cross(n);
     const float sa = cv::norm(v);
@@ -229,7 +231,8 @@ void Plane::Recompute()
     Tpw = cv::Mat::eye(4,4,CV_32F);
 
 
-    Tpw.rowRange(0,3).colRange(0,3) = ExpSO3(v*ang/sa)*ExpSO3(up*rang);
+    //Tpw.rowRange(0,3).colRange(0,3) = ExpSO3(v*ang/sa)*ExpSO3(up*rang);
+	ExpSO3(v*ang/sa).copyTo( Tpw.rowRange(0,3).colRange(0,3));
     o.copyTo(Tpw.col(3).rowRange(0,3));
 
     setIdentityM(glTpw);

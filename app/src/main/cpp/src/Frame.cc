@@ -49,12 +49,12 @@ cv::BFMatcher Frame::BFmatcher = cv::BFMatcher(cv::NORM_HAMMING);
 
 Frame::Frame(): mpcpi(NULL), mpImuPreintegrated(NULL), mpPrevFrame(NULL), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame*>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mbHasPose(false), mbHasVelocity(false)
 {
-    LOGI("###gyj###come in Frame::Frame 1!!!");
+    //LOGI("###gyj###come in Frame::Frame 1!!!");
 #ifdef REGISTER_TIMES
     mTimeStereoMatch = 0;
     mTimeORB_Ext = 0;
 #endif
-    LOGI("###gyj###Frame::Frame 1 over!!!");
+    //LOGI("###gyj###Frame::Frame 1 over!!!");
 }
 
 
@@ -79,7 +79,7 @@ Frame::Frame(const Frame &frame)
      mTlr(frame.mTlr), mRlr(frame.mRlr), mtlr(frame.mtlr), mTrl(frame.mTrl),
      mTcw(frame.mTcw), mbHasPose(false), mbHasVelocity(false)
 {
-    LOGI("###gyj###come in Frame::Frame 2!!!");
+    //LOGI("###gyj###come in Frame::Frame 2!!!");
     for(int i=0;i<FRAME_GRID_COLS;i++)
         for(int j=0; j<FRAME_GRID_ROWS; j++){
             mGrid[i][j]=frame.mGrid[i][j];
@@ -103,7 +103,7 @@ Frame::Frame(const Frame &frame)
     mTimeStereoMatch = frame.mTimeStereoMatch;
     mTimeORB_Ext = frame.mTimeORB_Ext;
 #endif
-        LOGI("###gyj###Frame::Frame 2 over!!!");
+        //LOGI("###gyj###Frame::Frame 2 over!!!");
 }
 
 
@@ -112,7 +112,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
      mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF),mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame*>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
      mpCamera(pCamera) ,mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
 {
-    LOGI("###gyj###come in Frame::Frame 3!!!");
+    //LOGI("###gyj###come in Frame::Frame 3!!!");
     // Frame ID
     mnId=nNextId++;
 
@@ -205,7 +205,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     monoRight = -1;
 
     AssignFeaturesToGrid();
-    LOGI("###gyj###Frame::Frame 3 over!!!");
+    //LOGI("###gyj###Frame::Frame 3 over!!!");
 }
 
 Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera,Frame* pPrevF, const IMU::Calib &ImuCalib)
@@ -214,7 +214,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
      mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame*>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
      mpCamera(pCamera),mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
 {
-    LOGI("###gyj###come in Frame::Frame 4!!!");
+    //LOGI("###gyj###come in Frame::Frame 4!!!");
     // Frame ID
     mnId=nNextId++;
 
@@ -295,7 +295,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     monoRight = -1;
 
     AssignFeaturesToGrid();
-    LOGI("###gyj###Frame::Frame 4 over!!!");
+    //LOGI("###gyj###Frame::Frame 4 over!!!");
 }
 
 
@@ -305,7 +305,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
      mImuCalib(ImuCalib), mpImuPreintegrated(NULL),mpPrevFrame(pPrevF),mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame*>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mpCamera(pCamera),
      mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
 {
-    LOGI("###gyj###come in Frame::Frame 5!!!");
+    //LOGI("###gyj###come in Frame::Frame 5!!!");
     // Frame ID
     mnId=nNextId++;
 
@@ -393,7 +393,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     }
 
     mpMutexImu = new std::mutex();
-    LOGI("###gyj###Frame::Frame 5 over!!!");
+    //LOGI("###gyj###Frame::Frame 5 over!!!");
 }
 
 
@@ -1051,7 +1051,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
          mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF),mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame*>(NULL)), mbImuPreintegrated(false), mpCamera(pCamera), mpCamera2(pCamera2),
          mbHasPose(false), mbHasVelocity(false)
 
-{   LOGI("###gyj###come in Frame::Frame 6!!!");
+{   //LOGI("###gyj###come in Frame::Frame 6!!!");
     imgLeft = imLeft.clone();
     imgRight = imRight.clone();
 
@@ -1135,7 +1135,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mpMutexImu = new std::mutex();
 
     UndistortKeyPoints();
-    LOGI("###gyj###Frame::Frame 6 over!!!");
+    //LOGI("###gyj###Frame::Frame 6 over!!!");
 }
 
 void Frame::ComputeStereoFishEyeMatches() {

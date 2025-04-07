@@ -7,6 +7,8 @@
 
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/opencv.hpp>
+#include "Common.h"
+
 void addTextToImage(const string &s, cv::Mat &im, const int r, const int g, const int b)
 {
     int l = 10;
@@ -57,18 +59,21 @@ Plane* detectPlane(const cv::Mat Tcw, const std::vector<ORB_SLAM3::MapPoint*> &v
         {
             if(pMP->Observations()>5)
             {
-                //vPoints.push_back(pMP->GetWorldPos());
                 cv::Mat WorldPos;
                 cv::eigen2cv(pMP->GetWorldPos(), WorldPos);
+                vPoints.push_back(WorldPos);
                 vPointMP.push_back(pMP);
+
             }
         }
     }
 
     const int N = vPoints.size();
 
-    if(N<50)
+    if(N<50){
+        LOGE("detectPlane: %d < 50, detect NULL\n", N);
         return NULL;
+    }
 
 
     // Indices for minimum set selection
