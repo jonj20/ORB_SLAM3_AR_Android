@@ -103,12 +103,12 @@ void clearImus() {
 std::vector<ORB_SLAM3::IMU::Point> getValidImus(double imgTimestamp) {
     std::vector<ORB_SLAM3::IMU::Point> IMUs;
    
-    m_buf.lock();
+   // m_buf.lock();
         while ( (!imu_buf.empty()) && (imu_buf.front().t < imgTimestamp)) {
             IMUs.emplace_back(imu_buf.front());
             imu_buf.pop();
         }
-    m_buf.lock();
+  //  m_buf.lock();
    
     return IMUs;
 }
@@ -146,6 +146,7 @@ int processImage(cv::Mat &image,cv::Mat &outputImage,int statusBuf[]){
     // Load imu measurements from previous frame
     vImuMeas.clear();
     vImuMeas = getValidImus(imgTimestamp);
+    LOGD("vImuMeas.size %d",vImuMeas.size());
     Sophus::SE3f Tcw_SE3f = slamSys->TrackMonocular(imgSmall,imgTimestamp, vImuMeas);
 #else
     Sophus::SE3f Tcw_SE3f = slamSys->TrackMonocular(imgSmall,imgTimestamp);
