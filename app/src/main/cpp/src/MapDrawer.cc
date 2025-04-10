@@ -464,4 +464,207 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M, pangolin
     MOw.m[13] = Twc(1,3);
     MOw.m[14] = Twc(2,3);
 }
+
+#ifdef USE_DENSE_MAPPING
+void MapDrawer::DrawOctoMap()
+{
+    //Map* pActiveMap = mpAtlas->GetCurrentMap();
+    //if(!pActiveMap) return;
+    //const vector<KeyFrame*> vKFs = pActiveMap->GetAllKeyFrames(); //  获取所有关键帧=====
+    //int N = vKFs.size();// 当前关键帧数量======
+
+    // 带有颜色的 octomap=====
+    if(mpDenseMapper == NULL){
+        std::cout<<"mpDenseMapper == NULL !!!!"<<std::endl;
+        return;
+    }
+    int counter = 0;// 计数
+    double occ_thresh = 0.8; // 概率阈值 原来 0.9  越大，显示的octomap格子越少
+    // int level = 16; // 八叉树地图 深度???
+    glClearColor(1.0f,1.0f,1.0f,1.0f);// 颜色 + 透明度
+
+    glDisable(GL_LIGHTING);
+    glEnable (GL_BLEND);
+    int max_depth = 16;
+    auto m_octree = mpDenseMapper->getOctreeCopy(); //no need to lock, by copy
+    double minX, minY, minZ, maxX, maxY, maxZ;
+    m_octree.getMetricMin(minX, minY, minZ);
+    m_octree.getMetricMax(maxX, maxY, maxZ);
+    for(auto it=m_octree.begin_tree(max_depth); it != m_octree.end_tree(); ++counter, ++it)
+    {
+       // if(level != it.getDepth()) continue;
+       if(!it.isLeaf())continue;
+       //double occ = it->getOccupancy();//占有概率=================
+       //if(occ < occ_thresh)continue // 占有概率较低====不显示
+       if(!m_octree.isNodeOccupied(*it))continue;
+       // std::cout<< occ << std::endl;
+       float halfsize = it.getSize()/2.0;// 半尺寸
+       float x = it.getX();
+       float y = it.getY();
+       float z = it.getZ();
+
+       // 高度====
+       double h = ( std::min(std::max((y-minY)/(maxY-minY), 0.0), 1.0))*0.8;
+       // 按高度 计算颜色
+       double r, g, b;
+       heightMapColor(h, r,g,b);
+
+       glBegin(GL_TRIANGLES); // 三角形??
+       //Front
+       glColor3d(r, g, b);// 显示颜色=====
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize);// - - - 1
+       glVertex3f(x-halfsize,y+halfsize,z-halfsize);// - + - 2
+       glVertex3f(x+halfsize,y+halfsize,z-halfsize);// + + -3
+
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize); // - - -
+       glVertex3f(x+halfsize,y+halfsize,z-halfsize); // + + -
+       glVertex3f(x+halfsize,y-halfsize,z-halfsize); // + - -4
+
+       //Back
+       glVertex3f(x-halfsize,y-halfsize,z+halfsize); // - - + 1
+       glVertex3f(x+halfsize,y-halfsize,z+halfsize); // + - + 2
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize); // + + + 3
+
+       glVertex3f(x-halfsize,y-halfsize,z+halfsize); // - - +
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize); // + + +
+       glVertex3f(x-halfsize,y+halfsize,z+halfsize); // - + + 4
+
+       //Left
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize); // - - - 1
+       glVertex3f(x-halfsize,y-halfsize,z+halfsize); // - - + 2
+       glVertex3f(x-halfsize,y+halfsize,z+halfsize); // - + + 3
+
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize); // - - -
+       glVertex3f(x-halfsize,y+halfsize,z+halfsize); // - + +
+       glVertex3f(x-halfsize,y+halfsize,z-halfsize); // - + - 4
+
+       //Right
+       glVertex3f(x+halfsize,y-halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y+halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize);
+
+       glVertex3f(x+halfsize,y-halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize);
+       glVertex3f(x+halfsize,y-halfsize,z+halfsize);
+
+       //top
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y-halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y-halfsize,z+halfsize);
+
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y-halfsize,z+halfsize);
+       glVertex3f(x-halfsize,y-halfsize,z+halfsize);
+
+       //bottom
+       glVertex3f(x-halfsize,y+halfsize,z-halfsize);
+       glVertex3f(x-halfsize,y+halfsize,z+halfsize);
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize);
+
+       glVertex3f(x-halfsize,y+halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize);
+       glVertex3f(x+halfsize,y+halfsize,z-halfsize);
+       glEnd();
+
+       glBegin(GL_LINES); // 线段=======
+       glColor3f(0,0,0);
+       //
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize);// - - - 1
+       glVertex3f(x-halfsize,y+halfsize,z-halfsize);
+
+       glVertex3f(x-halfsize,y+halfsize,z-halfsize);// - + - 2
+       glVertex3f(x+halfsize,y+halfsize,z-halfsize);// + + -3
+
+       glVertex3f(x+halfsize,y+halfsize,z-halfsize);// + + -3
+       glVertex3f(x+halfsize,y-halfsize,z-halfsize); // + - -4
+
+       glVertex3f(x+halfsize,y-halfsize,z-halfsize); // + - -4
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize);// - - - 1
+
+
+       // back
+
+       glVertex3f(x-halfsize,y-halfsize,z+halfsize); // - - + 1
+       glVertex3f(x+halfsize,y-halfsize,z+halfsize); // + - + 2
+
+       glVertex3f(x+halfsize,y-halfsize,z+halfsize); // + - + 2
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize); // + + + 3
+
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize); // + + + 3
+       glVertex3f(x-halfsize,y+halfsize,z+halfsize); // - + + 4
+
+       glVertex3f(x-halfsize,y+halfsize,z+halfsize); // - + + 4
+       glVertex3f(x-halfsize,y-halfsize,z+halfsize); // - - + 1
+
+       // top
+       glVertex3f(x+halfsize,y-halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y-halfsize,z+halfsize);
+
+       glVertex3f(x-halfsize,y-halfsize,z+halfsize);
+       glVertex3f(x-halfsize,y-halfsize,z-halfsize);
+
+        // bottom
+
+       glVertex3f(x-halfsize,y+halfsize,z+halfsize);
+       glVertex3f(x+halfsize,y+halfsize,z+halfsize);
+
+       glVertex3f(x-halfsize,y+halfsize,z-halfsize);
+       glVertex3f(x+halfsize,y+halfsize,z-halfsize);
+       glEnd();
+    }
+    std::cout<<"counter: "<<counter<<std::endl;
+}
+
+// 按高度 绘制 octomap 颜色======
+void MapDrawer::heightMapColor(double h, double& r, double &g, double& b)
+{   
+    double s = 1.0;
+    double v = 1.0;
+
+    h -= floor(h);
+    h *= 6;
+
+    int i;
+    double m, n, f;
+
+    i = floor(h);
+    f = h - i;
+
+    if(!(i & 1))
+    {   
+        f = 1 - f;
+    }
+    m = v * (1-s);
+    n = v * (1- s*f);
+
+    switch(i)
+    {   
+        case 6:
+        case 0:
+            r = v; g = n; b = m;
+            break;
+        case 1:
+            r = n; g = v; b = m;
+            break;
+        case 2:
+            r = m; g = v; b = n;
+            break;
+        case 3:
+            r = m; g = n; b = v;
+            break;
+        case 4:
+            r = n; g = m; b = v;
+            break;
+        case 5:
+            r = v; g = m; b = n;
+            break;
+        default:
+            r = 1; g = 0.5; b = 0.5;
+         break;
+
+    }
+
+}
+#endif
+
 } //namespace ORB_SLAM

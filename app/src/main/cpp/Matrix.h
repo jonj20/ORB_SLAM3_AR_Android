@@ -5,7 +5,7 @@
 #ifndef ORB_SLAM_AR_MATRIX_H
 #define ORB_SLAM_AR_MATRIX_H
 
-struct Quaternion{
+struct QuaternionM{
     float x,y,z,w;
     void copyTo(float outM[],int offset){
         outM[offset+0]=x;
@@ -40,11 +40,11 @@ void getRUBModelMatrixFromRDF(float inM[],float outM[]);
 
 void getEulerAnglesFromMatrix(float M[],float outM[],int offset);
 
-void quaternionToMatrix(float M[],Quaternion &q);
+void quaternionToMatrix(float M[],QuaternionM &q);
 
-void matrixToQuaternion(float M[],Quaternion &q);
+void matrixToQuaternion(float M[],QuaternionM &q);
 
-void quaternionU3DFromMatrix(float M[],Quaternion &q);
+void quaternionU3DFromMatrix(float M[],QuaternionM &q);
 
 void prepareModelM(float inM[],float outM[],const float size, const float x=0, const float y=0, const float z=0);
 

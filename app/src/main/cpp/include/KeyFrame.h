@@ -38,6 +38,10 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
 
+#ifdef USE_DENSE_MAPPING
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>// 体素格滤波
+#endif
 
 namespace ORB_SLAM3
 {
@@ -196,7 +200,9 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     KeyFrame();
     KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
-
+#ifdef USE_DENSE_MAPPING
+    KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB, cv::Mat rgb, cv::Mat depth);
+#endif
     // Pose functions
     void SetPose(const Sophus::SE3f &Tcw);
     void SetVelocity(const Eigen::Vector3f &Vw_);
@@ -494,7 +500,11 @@ protected:
 
     // Calibration
     Eigen::Matrix3f mK_;
-
+#ifdef USE_DENSE_MAPPING
+    cv::Mat mImDep; //depth image
+    cv::Mat mImRGB; //rgb image
+    pcl::PointCloud<pcl::PointXYZ>::Ptr mCamPC; //point cloud in local camera system
+#endif
     // Mutex
     std::mutex mMutexPose; // for pose, velocity and biases
     std::mutex mMutexConnections;
@@ -503,7 +513,9 @@ protected:
 
 public:
     GeometricCamera* mpCamera, *mpCamera2;
-
+#ifdef USE_DENSE_MAPPING
+    auto& GetPointCloud(){return mCamPC;}
+#endif
     //Indexes of stereo observations correspondences
     std::vector<int> mvLeftToRightMatch, mvRightToLeftMatch;
 
@@ -523,7 +535,9 @@ public:
     Eigen::Vector3f GetRightCameraCenter();
     Eigen::Matrix<float,3,3> GetRightRotation();
     Eigen::Vector3f GetRightTranslation();
-
+#ifdef USE_DENSE_MAPPING
+    void UpdatePointCloud();
+#endif
     void PrintPointDistribution(){
         int left = 0, right = 0;
         int Nlim = (NLeft != -1) ? NLeft : N;

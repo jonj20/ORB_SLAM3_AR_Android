@@ -19,6 +19,9 @@
 #include "KeyFrame.h"
 #include "Converter.h"
 #include "ImuTypes.h"
+#ifdef USE_DENSE_MAPPING
+#include <pcl/filters/statistical_outlier_removal.h>
+#endif
 #include<mutex>
 
 namespace ORB_SLAM3
@@ -60,6 +63,9 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
     mpCamera(F.mpCamera), mpCamera2(F.mpCamera2),
     mvLeftToRightMatch(F.mvLeftToRightMatch),mvRightToLeftMatch(F.mvRightToLeftMatch), mTlr(F.GetRelativePoseTlr()),
     mvKeysRight(F.mvKeysRight), NLeft(F.Nleft), NRight(F.Nright), mTrl(F.GetRelativePoseTrl()), mnNumberOfOpt(0), mbHasVelocity(false)
+#ifdef USE_DENSE_MAPPING
+    ,mCamPC(new pcl::PointCloud<pcl::PointXYZ>())
+#endif
 {
     mnId=nNextId++;
 
@@ -94,6 +100,15 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
 
     mnOriginMapId = pMap->GetId();
 }
+
+#ifdef USE_DENSE_MAPPING
+KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB, cv::Mat rgb, cv::Mat depth):
+    KeyFrame(F, pMap, pKFDB){
+        rgb.copyTo(mImRGB);
+        depth.copyTo(mImDep);
+        UpdatePointCloud();
+    }
+#endif
 
 void KeyFrame::ComputeBoW()
 {
@@ -1156,4 +1171,48 @@ void KeyFrame::SetKeyFrameDatabase(KeyFrameDatabase* pKFDB)
     mpKeyFrameDB = pKFDB;
 }
 
+#ifdef USE_DENSE_MAPPING
+// 生成当前帧的点云，简单滤波  todo: add the split of ground and non-ground
+void KeyFrame::UpdatePointCloud()
+{
+    mCamPC->points.clear();
+    for ( int m=0; m<(mImDep.rows); m+=1 )// 每一行
+     {
+          for ( int n=0; n<(mImDep.cols); n+=1 )//每一列
+          {
+              float d = mImDep.ptr<float>(m)[n];// 深度 m为单位 
+              if (d < 0.10 || d>8.0) // 相机测量范围, remove out of range point, todo: keep, it tell us it is empty in the front
+                 continue;
+              pcl::PointXYZ p;
+              p.z = d;
+              p.x = ( n - cx) * p.z / fx;
+              p.y = ( m - cy) * p.z / fy;
+              // if(p.y<-3.0 || p.y>3.0) continue;// 保留 垂直方向 -3～3m范围内的点 
+              //p.b = kf->mImRGB.ptr<uchar>(m)[n*3+0];// 点颜色=====
+              //p.g = kf->mImRGB.ptr<uchar>(m)[n*3+1];
+              //p.r = kf->mImRGB.ptr<uchar>(m)[n*3+2];
+              mCamPC->points.push_back( p );
+          }
+     }
+    // pcl::PointCloud<pcl::PointXYZ>::Ptr tmp( new pcl::PointCloud<pcl::PointXYZ> );
+    //remove isolated points, cause segmentation error
+    // pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+    // sor.setInputCloud(mCamPC);
+    // sor.setMeanK(50);// 50
+    // sor.setStddevMulThresh(1.0);
+    // sor.filter(*tmp);
+    // 体素格滤波======
+    pcl::VoxelGrid<pcl::PointXYZ> vg;
+    double resolution = 0.05/2; //todo: use config grid resolution=0.05
+    vg.setLeafSize(resolution, resolution, resolution);// 体素格子 尺寸
+    pcl::PointCloud<pcl::PointXYZ>::Ptr tmp( new pcl::PointCloud<pcl::PointXYZ> );
+    vg.setInputCloud(mCamPC);
+    vg.filter(*tmp);
+    tmp->swap(*mCamPC);
+    // 转换到世界坐标下==== no, transform based on KF pose later (may get updated)
+    // Eigen::Isometry3d T = ORB_SLAM3::Converter::toSE3Quat( kf->GetPose() );
+    // pcl::transformPointCloud( *cloud, mCamPointCloud, T.inverse().matrix());
+    //split ground vs non ground points (can be down only in world coordinate)
+}
+#endif
 } //namespace ORB_SLAM

@@ -163,8 +163,9 @@ void Viewer::Run()
 {
     mbFinished = false;
     mbStopped = false;
-
+    std::cout<<"start creating viewer window!!"<<std::endl;
     pangolin::CreateWindowAndBind("ORB-SLAM3: Map Viewer",1024,768);
+    std::cout<<"created viewer window!!"<<std::endl;
 
     // 3D Mouse handler requires depth testing to be enabled
     glEnable(GL_DEPTH_TEST);
@@ -314,6 +315,9 @@ void Viewer::Run()
             mpMapDrawer->DrawKeyFrames(menuShowKeyFrames,menuShowGraph, menuShowInertialGraph, menuShowOptLba);
         if(menuShowPoints)
             mpMapDrawer->DrawMapPoints();
+        else{
+            mpMapDrawer->DrawOctoMap();
+        }
 
         pangolin::FinishFrame();
 

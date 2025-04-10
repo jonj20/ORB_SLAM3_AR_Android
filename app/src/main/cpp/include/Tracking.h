@@ -139,6 +139,8 @@ public:
     Frame mLastFrame;
 
     cv::Mat mImGray;
+    cv::Mat mImRGB;//rgb image
+    cv::Mat mImDep;//depth image
 
     // Initialization Variables (Monocular)
     std::vector<int> mvIniLastMatches;

@@ -39,7 +39,9 @@
 #include "Viewer.h"
 #include "ImuTypes.h"
 #include "Settings.h"
-
+#ifdef USE_DENSE_MAPPING
+#include "DenseMapping.h"
+#endif
 
 namespace ORB_SLAM3
 {
@@ -78,6 +80,9 @@ class Atlas;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+#ifdef USE_DENSE_MAPPING
+class DenseMapping;
+#endif
 class Settings;
 
 class System
@@ -145,7 +150,9 @@ public:
     // Call first Shutdown()
     // See format details at: http://vision.in.tum.de/data/datasets/rgbd-dataset
     void SaveTrajectoryTUM(const string &filename);
-
+#ifdef USE_DENSE_MAPPING
+    vector<Eigen::Matrix4f> GetCameraTrajectory();
+#endif
     // Save keyframe poses in the TUM RGB-D dataset format.
     // This method works for all sensor input.
     // Call first Shutdown()
@@ -185,6 +192,9 @@ public:
     void ChangeDataset();
 
     float GetImageScale();
+#ifdef USE_DENSE_MAPPING
+    GridMap& Get2DOccMap();
+#endif
     Tracking* mpTracker;
     //Atlas* mpAtlas;
 #ifdef REGISTER_TIMES
@@ -220,7 +230,10 @@ private:
 
     // Local Mapper. It manages the local map and performs local bundle adjustment.
     LocalMapping* mpLocalMapper;
-
+#ifdef USE_DENSE_MAPPING
+    //Dense mapping, it constructs the octmap and other dense mapping information
+    DenseMapping* mpDenseMapper=NULL;
+#endif
     // Loop Closer. It searches loops with every new keyframe. If there is a loop it performs
     // a pose graph optimization and full bundle adjustment (in a new thread) afterwards.
     LoopClosing* mpLoopCloser;
@@ -234,6 +247,9 @@ private:
     // System threads: Local Mapping, Loop Closing, Viewer.
     // The Tracking thread "lives" in the main execution thread that creates the System object.
     std::thread* mptLocalMapping;
+#ifdef USE_DENSE_MAPPING
+    std::thread* mptDenseMapping;
+#endif
     std::thread* mptLoopClosing;
     std::thread* mptViewer;
 

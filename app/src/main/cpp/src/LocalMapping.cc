@@ -55,6 +55,12 @@ void LocalMapping::SetLoopCloser(LoopClosing* pLoopCloser)
 {
     mpLoopCloser = pLoopCloser;
 }
+#ifdef USE_DENSE_MAPPING
+void LocalMapping::SetDenseMapper(DenseMapping *pDenseMapper)
+{
+    mpDenseMapper = pDenseMapper;
+}
+#endif
 
 void LocalMapping::SetTracker(Tracking *pTracker)
 {
@@ -248,7 +254,10 @@ void LocalMapping::Run()
 #endif
 
             mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
-
+        #ifdef USE_DENSE_MAPPING
+            if(mpDenseMapper!=nullptr)
+                mpDenseMapper->InsertKeyFrame(mpCurrentKeyFrame);
+        #endif
 #ifdef REGISTER_TIMES
             std::chrono::steady_clock::time_point time_EndLocalMap = std::chrono::steady_clock::now();
 

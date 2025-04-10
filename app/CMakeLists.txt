@@ -3,21 +3,29 @@ cmake_minimum_required(VERSION 3.4.1)
 SET(CMAKE_BUILD_TYPE Release)
 #SET(CMAKE_BUILD_TYPE Debug)
 
+# # pcl 
+# find_package(PCL REQUIRED)
+# include_directories(${PCL_INCLUDE_DIRS})
+# add_definitions(${PCL_DEFINITIONS})
 
+# # octomap 
+# find_package(octomap REQUIRED)
+# include_directories(${OCTOMAP_INCLUDE_DIRS})
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/src/main/cpp
 	${PROJECT_SOURCE_DIR}/src/main/cpp/include
 	${PROJECT_SOURCE_DIR}/src/main/cpp/include/CameraModels
 	${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/Sophus
-    ${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/Sophus/sophus
+	${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/Sophus/sophus
 	${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/Eigen/eigen-3.4.0
 	${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/Eigen/eigen-3.4.0/src
-    ${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/boost/boost-1_72_0
+	${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/boost/boost-1_72_0
 	${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/boost/boost-1_72_0/boost
 	${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/openssl/openssl-1.0.2s
 	${PROJECT_SOURCE_DIR}/src/main/cpp/Thirdparty/openssl/openssl-1.0.2s/openssl
-	${PROJECT_SOURCE_DIR}/src/main/cpp/opencv/opencv-4.5.5/include			 
+	${PROJECT_SOURCE_DIR}/src/main/cpp/opencv/opencv-4.5.5/include
+	${PROJECT_SOURCE_DIR}/src/main/cpp/src/a2ir		 
 )
 
 
@@ -184,18 +192,21 @@ add_library(ORBSLAM3
     #src/main/cpp/src/Viewer.cc
 )
 
-find_library( # Sets the name of the path variable.
-              log-lib
-
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
+#C++日志
+find_library( log-lib log )
+find_library( android-lib android )
 
 
 add_library(
         SLAM_JNI
 
         SHARED
+
+	#imu sensor
+        src/main/cpp/src/a2ir/log_util.cpp
+        src/main/cpp/src/a2ir/phone_sensor.cpp
+        src/main/cpp/src/a2ir/timer.cpp
+
         src/main/cpp/native-lib.cpp
         src/main/cpp/UIUtils.cpp
         src/main/cpp/Plane.cpp
@@ -204,6 +215,7 @@ add_library(
         src/main/cpp/Marker.cpp
         src/main/cpp/Process.cpp
         src/main/cpp/Camera.cpp
+		#src/main/cpp/DenseMapping.cpp
  )
 
 #以导入方式添加静态库
@@ -252,6 +264,7 @@ target_link_libraries( # Specifies the target library.
                        SLAM_JNI
                        # Links the target library to the log library
                        # included in the NDK.
+		       ${android-lib}
                        ${log-lib}
                        # Links the target library to the ORBSLAM3 library
                        ORBSLAM3

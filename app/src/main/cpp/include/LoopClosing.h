@@ -22,6 +22,9 @@
 
 #include "KeyFrame.h"
 #include "LocalMapping.h"
+#ifdef USE_DENSE_MAPPING
+#include "DenseMapping.h"
+#endif
 #include "Atlas.h"
 #include "ORBVocabulary.h"
 #include "Tracking.h"
@@ -38,6 +41,9 @@ namespace ORB_SLAM3
 
 class Tracking;
 class LocalMapping;
+#ifdef USE_DENSE_MAPPING
+class DenseMapping;
+#endif
 class KeyFrameDatabase;
 class Map;
 
@@ -57,7 +63,9 @@ public:
     void SetTracker(Tracking* pTracker);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
-
+#ifdef USE_DENSE_MAPPING
+    void SetDenseMapper(DenseMapping *pDenseMapper);
+#endif
     // Main function
     void Run();
 
@@ -163,7 +171,9 @@ protected:
     ORBVocabulary* mpORBVocabulary;
 
     LocalMapping *mpLocalMapper;
-
+#ifdef USE_DENSE_MAPPING
+    DenseMapping *mpDenseMapper = nullptr;
+#endif
     std::list<KeyFrame*> mlpLoopKeyFrameQueue;
 
     std::mutex mMutexLoopQueue;

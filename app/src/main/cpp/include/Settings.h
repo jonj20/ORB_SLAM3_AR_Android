@@ -111,7 +111,14 @@ namespace ORB_SLAM3 {
         float viewPointZ() {return viewPointZ_;}
         float viewPointF() {return viewPointF_;}
         float imageViewerScale() {return imageViewerScale_;}
-
+    #ifdef USE_DENSE_MAPPING
+        bool doDenseMapping() {return bDenseMapping_;}
+        bool map2D() {return bMap2D_;}
+        float gridSize() {return gridSize_;}
+        float camHeight() {return camHeight_;}
+        float maxRange() {return maxRange_;}
+        bool simpleGround(){return bSimple_;}
+    #endif
         std::string atlasLoadFile() {return sLoadFrom_;}
         std::string atlasSaveFile() {return sSaveto_;}
 
@@ -153,7 +160,9 @@ namespace ORB_SLAM3 {
         void readViewer(cv::FileStorage& fSettings);
         void readLoadAndSave(cv::FileStorage& fSettings);
         void readOtherParameters(cv::FileStorage& fSettings);
-
+    #ifdef USE_DENSE_MAPPING
+        void readDenseMapping(cv::FileStorage& fSettings);
+    #endif
         void precomputeRectificationMaps();
 
         int sensor_;
@@ -217,6 +226,18 @@ namespace ORB_SLAM3 {
         float cameraLineWidth_;
         float viewPointX_, viewPointY_, viewPointZ_, viewPointF_;
         float imageViewerScale_;
+
+    #ifdef USE_DENSE_MAPPING
+        /*
+        * DenseMapping stuff
+        */
+       bool bDenseMapping_;
+       float gridSize_;
+       bool bMap2D_;
+       bool bSimple_;
+       float camHeight_;
+       float maxRange_;
+    #endif
 
         /*
          * Save & load maps

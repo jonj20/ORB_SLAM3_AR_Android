@@ -24,6 +24,10 @@
 #include"MapPoint.h"
 #include"KeyFrame.h"
 #include "Settings.h"
+#ifdef USE_DENSE_MAPPING
+#include"DenseMapping.h"
+#include<octomap/OcTree.h>
+#endif
 //#include<pangolin/pangolin.h>
 
 #include<mutex>
@@ -42,13 +46,20 @@ public:
     void newParameterLoader(Settings* settings);
 
     Atlas* mpAtlas;
-
+#ifdef USE_DENSE_MAPPING
+    DenseMapping* mpDenseMapper = nullptr;
+#endif
     void DrawMapPoints();
+
     void DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph, const bool bDrawInertialGraph, const bool bDrawOptLba);
     //void DrawCurrentCamera(pangolin::OpenGlMatrix &Twc);
     void SetCurrentCameraPose(const Sophus::SE3f &Tcw);
     void SetReferenceKeyFrame(KeyFrame *pKF);
     //void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M, pangolin::OpenGlMatrix &MOw);
+#ifdef USE_DENSE_MAPPING
+    void DrawOctoMap();    
+    void heightMapColor(double h, double& r, double &g, double& b);
+#endif
 
 private:
 

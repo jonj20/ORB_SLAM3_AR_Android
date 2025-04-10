@@ -312,7 +312,7 @@ void getEulerAnglesFromMatrix(float M[],float outM[],int offset){
     outM[offset+2] =180.0f/PI*atan2(-M[8], M[10]);
 }
 
-void quaternionToMatrix(float M[],Quaternion &q){
+void quaternionToMatrix(float M[],QuaternionM &q){
     float m00;
     float m10;
     float m20;
@@ -361,7 +361,7 @@ void quaternionToMatrix(float M[],Quaternion &q){
     M[10]=m22;
 }
 
-void matrixToQuaternion(float M[],Quaternion &q){
+void matrixToQuaternion(float M[],QuaternionM &q){
     float qx,qy,qz,qw;
     float m00=M[0];
     float m10=M[1];
@@ -411,7 +411,7 @@ inline float sign(float f){
     return 1.0f;
 }
 
-void quaternionU3DFromMatrix(float M[],Quaternion &q)
+void quaternionU3DFromMatrix(float M[],QuaternionM &q)
 {
     // Adapted from: http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
     float m00=M[0],m10=M[1],m20=M[2];

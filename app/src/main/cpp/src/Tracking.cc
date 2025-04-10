@@ -33,11 +33,8 @@
 
 #include <mutex>
 #include <chrono>
-#include <android/log.h>
-#define  LOG_TAG    "native-dev"
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
-#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#include "Common.h"
+
 
 using namespace std;
 
@@ -1525,7 +1522,9 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
 Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename)
 {
     mImGray = imRGB;
-    cv::Mat imDepth = imD;
+    mImRGB = imRGB;
+    mImDep = imD;
+    // cv::Mat mImDep= imD;
 
     if(mImGray.channels()==3)
     {
@@ -1542,13 +1541,13 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
             cvtColor(mImGray,mImGray,cv::COLOR_BGRA2GRAY);
     }
 
-    if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
-        imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
+    if((fabs(mDepthMapFactor-1.0f)>1e-5) || mImDep.type()!=CV_32F)
+        mImDep.convertTo(mImDep,CV_32F,mDepthMapFactor);
 
     if (mSensor == System::RGBD)
-        mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
+        mCurrentFrame = Frame(mImGray,mImDep,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
     else if(mSensor == System::IMU_RGBD)
-        mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
+        mCurrentFrame = Frame(mImGray,mImDep,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
 
 
 
@@ -2027,8 +2026,11 @@ void Tracking::Track()
                     {
                         mpSystem->ResetActiveMap();
                         Verbose::PrintMess("Reseting current map...", Verbose::VERBOSITY_NORMAL);
-                    }else
+                    }else{
+                        //std::cout<<"orb3 creates a new map because lost for too long, we don't do it for now!!!!"<<std::endl;
+                        //don't create new map even if we are lost
                         CreateMapInAtlas();
+                    }
 
                     if(mpLastKeyFrame)
                         mpLastKeyFrame = static_cast<KeyFrame*>(NULL);
@@ -2205,10 +2207,11 @@ void Tracking::Track()
 #endif
 
         // Update drawer
-        //mpFrameDrawer->Update(this);
+    #ifdef USE_DENSE_MAPPING
+        mpFrameDrawer->Update(this);//mpFrameDrawer->Update(this);
         if(mCurrentFrame.isSet())
-            //mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
-
+            mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());//mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
+    #endif
         if(bOK || mState==RECENTLY_LOST)
         {
             // Update motion model
@@ -2221,10 +2224,10 @@ void Tracking::Track()
             else {
                 mbVelocity = false;
             }
-
+        #ifdef USE_DENSE_MAPPING
             if(mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
-                //mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
-
+                mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());//mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
+        #endif
             // Clean VO matches
             for(int i=0; i<mCurrentFrame.N; i++)
             {
@@ -2251,6 +2254,7 @@ void Tracking::Track()
             bool bNeedKF = NeedNewKeyFrame();
 
             // Check if we need to insert a new keyframe
+            // change of ORB3 by Qi, to avoid inserting new KeyFrames when tracking lost and avoid creating new map (e.g. when lookin into a wall)
             // if(bNeedKF && bOK)
             if(bNeedKF && (bOK || (mInsertKFsLost && mState==RECENTLY_LOST &&
                                    (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD))))
@@ -2444,9 +2448,9 @@ void Tracking::StereoInitialization()
         mpAtlas->SetReferenceMapPoints(mvpLocalMapPoints);
 
         mpAtlas->GetCurrentMap()->mvpKeyFrameOrigins.push_back(pKFini);
-
-        //mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
-
+    #ifdef USE_DENSE_MAPPING
+        mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());//mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.GetPose());
+    #endif
         mState=OK;
     }
 }
@@ -2655,9 +2659,9 @@ void Tracking::CreateInitialMapMonocular()
     mLastFrame = Frame(mCurrentFrame);
 
     mpAtlas->SetReferenceMapPoints(mvpLocalMapPoints);
-
-    //mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
-
+#ifdef USE_DENSE_MAPPING
+    mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());//mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
+#endif
     mpAtlas->GetCurrentMap()->mvpKeyFrameOrigins.push_back(pKFini);
 
     mState=OK;
@@ -3228,7 +3232,13 @@ void Tracking::CreateNewKeyFrame()
     if(!mpLocalMapper->SetNotStop(true))
         return;
 
-    KeyFrame* pKF = new KeyFrame(mCurrentFrame,mpAtlas->GetCurrentMap(),mpKeyFrameDB);
+    KeyFrame* pKF=NULL;
+#ifdef USE_DENSE_MAPPING
+    if (mSensor == System::RGBD || mSensor == System::IMU_RGBD){
+        pKF = new KeyFrame(mCurrentFrame,mpAtlas->GetCurrentMap(),mpKeyFrameDB, this->mImRGB, this->mImDep); //depth ???
+    }else
+#endif
+    pKF = new KeyFrame(mCurrentFrame,mpAtlas->GetCurrentMap(),mpKeyFrameDB);
 
     if(mpAtlas->isImuInitialized()) //  || mpLocalMapper->IsInitializing())
         pKF->bImu = true;

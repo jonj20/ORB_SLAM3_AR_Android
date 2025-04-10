@@ -42,6 +42,32 @@ Camera.fps: 20
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
+
+#--------------------------------------------------------------------------------------------
+# IMU Parameters
+#--------------------------------------------------------------------------------------------
+
+# Transformation from camera to body-frame (imu)
+IMU.T_b_c1: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: f
+   data: [ 0.99996517, -0.00365568, -0.00750293,  0.03606208,
+          -0.00413672, -0.99786807, -0.06513218, -0.01643879,
+          -0.00724884,  0.06516095, -0.99784844, -0.02471846,
+          0.,          0.,          0.,          1.        ]
+   
+# IMU noise
+IMU.NoiseGyro: 2.0897790366737560e-03
+IMU.GyroWalk: 3.3686475741950929e-05
+
+IMU.NoiseAcc: 3.0690310195074056e-02
+IMU.AccWalk: 9.7833628333635959e-04
+
+IMU.Frequency: 300.0
+
+
+
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
@@ -76,3 +102,12 @@ Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -1.8
 Viewer.ViewpointF: 500.0
 
+
+
+# ##Octomap Dense Mapping
+# DenseMapping.on: 1
+# DenseMapping.gridSize: 0.05
+# DenseMapping.map2D: 0
+# DenseMapping.camHeight: 1.5
+# DenseMapping.simpleGround: 0
+# DenseMapping.maxRange: 6.0
